@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>chatApp</title>
+  <style>
+    #output li {
+      background: #ccc;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>realtime chat</h1>
+  <!-- 入力場所を作成しよう -->
+  <ul>
+    <li>
+    <label for="name">name</label>
+    <input type="text" id="name">
+    </li>
+    <li>
+    <textarea name="" id="text" cols="30" rows="10"></textarea>
+    </li>
+    <li>
+    <button id="send">send</button>
+    </li>
+  </ul>
+  <!-- データ出力場所 -->
+  <ul id="output"></ul>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <!-- 以下にfirebaseのコードを貼り付けよう -->
+
+  <!-- The core Firebase JS SDK is always required and must be listed first -->
+<script src="https://www.gstatic.com/firebasejs/8.1.1/firebase.js"></script> 
+
+<!-- TODO: Add SDKs for Firebase products that you want to use
+     https://firebase.google.com/docs/web/setup#available-libraries -->
+<script src="https://www.gstatic.com/firebasejs/8.1.1/firebase-analytics.js"></script>
+
+<script>
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  var firebaseConfig = {
+    apiKey: "",
+    authDomain: "chatapp-16-e7abf.firebaseapp.com",
+    databaseURL: "https://chatapp-16-e7abf.firebaseio.com",
+    projectId: "chatapp-16-e7abf",
+    storageBucket: "chatapp-16-e7abf.appspot.com",
+    messagingSenderId: "667184084169",
+    appId: "1:667184084169:web:309513e85213264b9b0918",
+    measurementId: "G-3YYMM0PVJH"
+  };
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  firebase.analytics();
+  const db = firebase.firestore().collection('chat');
+</script>
+
+  <script>
+    // 日時をいい感じの形式にする関数
+    function convertFromFirestoreTimestampToDatetime(timestamp) {
+      const _d = timestamp ? new Date(timestamp * 1000) : new Date();
+      const Y = _d.getFullYear();
+      const m = (_d.getMonth() + 1).toString().padStart(2, '0');
+      const d = _d.getDate().toString().padStart(2, '0');
+      const H = _d.getHours().toString().padStart(2, '0');
+      const i = _d.getMinutes().toString().padStart(2, '0');
+      const s = _d.getSeconds().toString().padStart(2, '0');
+      return `${Y}/${m}/${d} ${H}:${i}:${s}`;
+    }
+
+    // データベースの設定を記述
+
+
+    // 送信ボタンクリック時にデータを送信する処理
+    $('#send').on('click', function () { 
+      const data = {
+        name: $('#name').val(),
+        text: $('#text').val(),
+        time: firebase.firestore.FieldValue.serverTimestamp(),
+      };
+      //console.log(data)
+      db.add(data);
+      $('#text').val(''); //テキストボックスを空白にする
+      // $('#name').val('');
+    });
+
+    // データをリアルタイムに取得する処理
+    db.orderBy('time', 'desc').onSnapshot(function (querySnapshot) { //onSnapshot 
+      // まずはconsole.log()で出力してデータの形を確認！
+      //console.log(querySnapshot.docs);
+      let str = '';
+      querySnapshot.docs.forEach(function (doc) {
+        const id = doc.id;
+        const data = doc.data();
+        const datetime = convertFromFirestoreTimestampToDatetime(data.time.seconds);
+        str += '<li = id "' + id + '">';  //idにkey名を追加
+        str += '<p>' + data.name + '</p>';
+        str += '<p>' + datetime + '</p>';
+        str += '<p>' + data.text + '</p>';
+        str += '</li>';
+      });
+      $('#output').html(str);
+    });
+
+    // 記号集
+    // forEach : 
+    // doc : 
+    // convertFromFirestoreTimestampToDatetime() : 
+    // 
+
+  </script>
+</body>
+
+</html>
+
